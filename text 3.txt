@@ -1,0 +1,102 @@
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+canvas.width = 800;
+canvas.height = 600;
+
+const CAR_WIDTH = 50;
+const CAR_HEIGHT = 100;
+const OBSTACLE_SPEED = 5.0;
+const CAR_SPEED = 10.0;
+
+const player = {
+    x: canvas.width / 2 - CAR_WIDTH / 2,
+    y: canvas.height - CAR_HEIGHT - 10,
+    width: CAR_WIDTH,
+    height: CAR_HEIGHT,
+    color: 'green',
+};
+
+const obstacles = [];
+let spawnTimer = 0;
+const spawnInterval = 60;
+
+function drawRect(x, y, width, height, color) {
+    ctx.fillStyle = color;
+    ctx.fillRect(x, y, width, height);
+}
+
+function movePlayer() {
+    if (keys['ArrowLeft'] && player.x > 0) {
+        player.x -= CAR_SPEED;
+    }
+    if (keys['ArrowRight'] && player.x + player.width < canvas.width) {
+        player.x += CAR_SPEED;
+    }
+}
+
+function spawnObstacles() {
+    spawnTimer++;
+    if (spawnTimer >= spawnInterval) {
+        const obstacleX = Math.random() * (canvas.width - CAR_WIDTH);
+        obstacles.push({ x: obstacleX, y: -CAR_HEIGHT });
+        spawnTimer = 0;
+    }
+}
+
+function moveObstacles() {
+    for (let i = 0; i < obstacles.length; i++) {
+        obstacles[i].y += OBSTACLE_SPEED;
+    }
+}
+
+function clearOffScreenObstacles() {
+    for (let i = 0; i < obstacles.length; i++) {
+        if (obstacles[i].y > canvas.height) {
+            obstacles.splice(i, 1);
+            i--;
+        }
+    }
+}
+
+function checkCollision() {
+    for (let i = 0; i < obstacles.length; i++) {
+        if (
+            player.x < obstacles[i].x + CAR_WIDTH &&
+            player.x + player.width > obstacles[i].x &&
+            player.y < obstacles[i].y + CAR_HEIGHT &&
+            player.y + player.height > obstacles[i].y
+        ) {
+            alert('Game Over!');
+            document.location.reload();
+        }
+    }
+}
+
+function gameLoop() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    drawRect(player.x, player.y, player.width, player.height, player.color);
+
+    movePlayer();
+    spawnObstacles();
+    moveObstacles();
+    clearOffScreenObstacles();
+    checkCollision();
+
+    obstacles.forEach(obstacle => {
+        drawRect(obstacle.x, obstacle.y, CAR_WIDTH, CAR_HEIGHT, 'red');
+    });
+
+    requestAnimationFrame(gameLoop);
+}
+
+const keys = {};
+window.addEventListener('keydown', function (e) {
+    keys[e.key] = true;
+});
+window.addEventListener('keyup', function (e) {
+    keys[e.key] = false;
+});
+
+gameLoop();
